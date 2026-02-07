@@ -18,6 +18,7 @@ function Dashboard() {
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
   const [loggingComponent, setLoggingComponent] = useState<Component | null>(null);
   const [editingRecord, setEditingRecord] = useState<Record | null>(null);
+  const [addingRecordDate, setAddingRecordDate] = useState<string | null>(null);
 
   const { data: components = [], isLoading: componentsLoading } = useComponents();
   const { data: records = [], isLoading: recordsLoading } = useRecords();
@@ -52,8 +53,17 @@ function Dashboard() {
 
   const handleLogActivity = (data: RecordFormData) => {
     createRecord.mutate(data, {
-      onSuccess: () => setLoggingComponent(null),
+      onSuccess: () => {
+        setLoggingComponent(null);
+        setAddingRecordDate(null);
+      },
     });
+  };
+
+  const handleDayClick = (date: string) => {
+    if (components.length > 0) {
+      setAddingRecordDate(date);
+    }
   };
 
   const handleUpdateRecord = (data: Partial<Omit<RecordFormData, 'componentId'>>) => {
@@ -67,7 +77,9 @@ function Dashboard() {
 
   const handleDeleteRecord = (id: string) => {
     if (confirm('Delete this record?')) {
-      deleteRecord.mutate(id);
+      deleteRecord.mutate(id, {
+        onSuccess: () => setEditingRecord(null),
+      });
     }
   };
 
@@ -119,7 +131,7 @@ function Dashboard() {
               )}
             </section>
 
-            <CalendarView records={records} components={components} />
+            <CalendarView records={records} components={components} onRecordClick={setEditingRecord} onDayClick={handleDayClick} />
 
             <MetricsPanel records={records} components={components} />
           </div>
@@ -163,9 +175,20 @@ function Dashboard() {
         onClose={() => setEditingRecord(null)}
         onSubmit={handleLogActivity}
         onUpdate={handleUpdateRecord}
+        onDelete={handleDeleteRecord}
         component={null}
         record={editingRecord}
         isLoading={updateRecord.isPending}
+      />
+
+      <RecordModal
+        isOpen={!!addingRecordDate}
+        onClose={() => setAddingRecordDate(null)}
+        onSubmit={handleLogActivity}
+        component={null}
+        components={components}
+        defaultDate={addingRecordDate || undefined}
+        isLoading={createRecord.isPending}
       />
     </div>
   );

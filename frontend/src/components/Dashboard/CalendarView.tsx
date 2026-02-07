@@ -5,9 +5,11 @@ interface EffortIconProps {
   effort: EffortLevel;
   color: string;
   componentName: string;
+  record: Record;
+  onRecordClick?: (record: Record) => void;
 }
 
-function EffortIcon({ effort, color, componentName }: EffortIconProps) {
+function EffortIcon({ effort, color, componentName, record, onRecordClick }: EffortIconProps) {
   const size = 12;
 
   const getShape = () => {
@@ -24,7 +26,13 @@ function EffortIcon({ effort, color, componentName }: EffortIconProps) {
   };
 
   return (
-    <div className="group relative cursor-pointer">
+    <div
+      className="group relative cursor-pointer"
+      onClick={(e) => {
+        e.stopPropagation();
+        onRecordClick?.(record);
+      }}
+    >
       <svg width={size} height={size} viewBox="0 0 12 12">
         {getShape()}
       </svg>
@@ -40,6 +48,8 @@ function EffortIcon({ effort, color, componentName }: EffortIconProps) {
 interface CalendarViewProps {
   records: Record[];
   components: Component[];
+  onRecordClick?: (record: Record) => void;
+  onDayClick?: (date: string) => void;
 }
 
 type ViewMode = 'week' | 'month';
@@ -110,7 +120,7 @@ function getMonthWeeks(year: number, month: number): Date[][] {
   return weeks;
 }
 
-export function CalendarView({ records, components }: CalendarViewProps) {
+export function CalendarView({ records, components, onRecordClick, onDayClick }: CalendarViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedComponentId, setSelectedComponentId] = useState<string>('all');
@@ -228,36 +238,38 @@ export function CalendarView({ records, components }: CalendarViewProps) {
       </div>
 
       {/* View mode toggle and navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={navigatePrev}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <span className="text-sm font-medium text-gray-700 min-w-[180px] text-center">
-            {getHeaderText()}
-          </span>
-          <button
-            onClick={navigateNext}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between sm:justify-start gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={navigatePrev}
+              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span className="text-sm font-medium text-gray-700 min-w-[140px] sm:min-w-[180px] text-center">
+              {getHeaderText()}
+            </span>
+            <button
+              onClick={navigateNext}
+              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
           <button
             onClick={goToToday}
-            className="ml-2 px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+            className="px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
           >
             Today
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-end gap-3">
           {/* Component Filter */}
           <div className="flex items-center gap-2">
             <label htmlFor="component-filter" className="text-xs text-gray-500">
@@ -324,7 +336,8 @@ export function CalendarView({ records, components }: CalendarViewProps) {
             return (
               <div
                 key={dateStr}
-                className={`min-h-[60px] p-1 rounded-lg border transition-colors ${
+                onClick={() => onDayClick?.(dateStr)}
+                className={`min-h-[60px] p-1 rounded-lg border transition-colors cursor-pointer hover:border-indigo-300 ${
                   isToday
                     ? 'border-indigo-500 bg-indigo-50'
                     : isCurrentMonth
@@ -356,6 +369,8 @@ export function CalendarView({ records, components }: CalendarViewProps) {
                         effort={record.effortLevel}
                         color={component?.color || '#9ca3af'}
                         componentName={component?.name || 'Unknown'}
+                        record={record}
+                        onRecordClick={onRecordClick}
                       />
                     );
                   })}

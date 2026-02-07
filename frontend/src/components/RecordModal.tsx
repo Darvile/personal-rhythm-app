@@ -10,8 +10,11 @@ interface RecordModalProps {
   onClose: () => void;
   onSubmit: (data: RecordFormData) => void;
   onUpdate?: (data: Partial<Omit<RecordFormData, 'componentId'>>) => void;
+  onDelete?: (id: string) => void;
   component: Component | null;
+  components?: Component[];
   record?: Record | null;
+  defaultDate?: string;
   isLoading?: boolean;
 }
 
@@ -21,8 +24,9 @@ const effortOptions = [
   { value: 'high', label: 'High Effort' },
 ];
 
-export function RecordModal({ isOpen, onClose, onSubmit, onUpdate, component, record, isLoading }: RecordModalProps) {
+export function RecordModal({ isOpen, onClose, onSubmit, onUpdate, onDelete, component, components, record, defaultDate, isLoading }: RecordModalProps) {
   const isEditing = !!record;
+  const showComponentSelector = !component && !record && components && components.length > 0;
 
   const [formData, setFormData] = useState<RecordFormData>({
     componentId: '',
@@ -48,15 +52,23 @@ export function RecordModal({ isOpen, onClose, onSubmit, onUpdate, component, re
         note: record.note || '',
       });
     } else if (component) {
-      // Creating mode: set defaults
+      // Creating mode with pre-selected component
       setFormData({
         componentId: component._id,
-        date: new Date().toISOString().split('T')[0],
+        date: defaultDate || new Date().toISOString().split('T')[0],
+        effortLevel: 'medium',
+        note: '',
+      });
+    } else if (showComponentSelector) {
+      // Creating mode with component selector
+      setFormData({
+        componentId: components[0]._id,
+        date: defaultDate || new Date().toISOString().split('T')[0],
         effortLevel: 'medium',
         note: '',
       });
     }
-  }, [component, record, isOpen]);
+  }, [component, components, record, defaultDate, isOpen, showComponentSelector]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,25 +90,39 @@ export function RecordModal({ isOpen, onClose, onSubmit, onUpdate, component, re
     color: record.componentId.color,
   } : null);
 
-  if (!displayComponent && !record) return null;
+  // Get selected component when using component selector
+  const selectedComponent = showComponentSelector
+    ? components.find(c => c._id === formData.componentId)
+    : null;
 
-  const componentName = displayComponent?.name || 'Unknown';
-  const componentColor = displayComponent?.color || '#9ca3af';
+  if (!displayComponent && !record && !showComponentSelector) return null;
+
+  const componentName = displayComponent?.name || selectedComponent?.name || 'Unknown';
+  const componentColor = displayComponent?.color || selectedComponent?.color || '#9ca3af';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? `Edit Activity` : `Log Activity: ${componentName}`}
+      title={isEditing ? `Edit Activity` : showComponentSelector ? 'Log Activity' : `Log Activity: ${componentName}`}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-          <div
-            className="w-4 h-4 rounded-full"
-            style={{ backgroundColor: componentColor }}
+        {showComponentSelector ? (
+          <Select
+            label="Component"
+            value={formData.componentId}
+            onChange={(e) => setFormData({ ...formData, componentId: e.target.value })}
+            options={components.map((c) => ({ value: c._id, label: c.name }))}
           />
-          <span className="font-medium">{componentName}</span>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <div
+              className="w-4 h-4 rounded-full"
+              style={{ backgroundColor: componentColor }}
+            />
+            <span className="font-medium">{componentName}</span>
+          </div>
+        )}
 
         <Input
           label="Date"
@@ -127,6 +153,15 @@ export function RecordModal({ isOpen, onClose, onSubmit, onUpdate, component, re
         </div>
 
         <div className="flex gap-3 pt-4">
+          {isEditing && onDelete && record && (
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => onDelete(record._id)}
+            >
+              Delete
+            </Button>
+          )}
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
             Cancel
           </Button>
