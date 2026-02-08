@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Component, ComponentFormData, Record, RecordFormData } from '../types';
+import type { Component, ComponentFormData, Record, RecordFormData, PulseCheck, PulseCheckFormData, InsightsData } from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -52,5 +52,41 @@ export const recordApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/records/${id}`);
+  },
+};
+
+export const pulseCheckApi = {
+  getAll: async (params?: { startDate?: string; endDate?: string }): Promise<PulseCheck[]> => {
+    const { data } = await api.get<PulseCheck[]>('/pulse-checks', { params });
+    return data;
+  },
+
+  getToday: async (): Promise<PulseCheck | null> => {
+    const { data } = await api.get<PulseCheck | null>('/pulse-checks/today');
+    return data;
+  },
+
+  getById: async (id: string): Promise<PulseCheck> => {
+    const { data } = await api.get<PulseCheck>(`/pulse-checks/${id}`);
+    return data;
+  },
+
+  create: async (pulseCheck: PulseCheckFormData): Promise<PulseCheck> => {
+    const { data } = await api.post<PulseCheck>('/pulse-checks', pulseCheck);
+    return data;
+  },
+
+  update: async (id: string, pulseCheck: Partial<PulseCheckFormData>): Promise<PulseCheck> => {
+    const { data } = await api.patch<PulseCheck>(`/pulse-checks/${id}`, pulseCheck);
+    return data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/pulse-checks/${id}`);
+  },
+
+  getInsights: async (): Promise<InsightsData> => {
+    const { data } = await api.get<InsightsData>('/pulse-checks/insights');
+    return data;
   },
 };

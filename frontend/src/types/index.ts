@@ -36,3 +36,50 @@ export interface RecordFormData {
   effortLevel: EffortLevel;
   note?: string;
 }
+
+export interface PulseCheck {
+  _id: string;
+  date: string;
+  energyLevel: number;  // 1-5
+  moodLevel: number;    // 1-5
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PulseCheckFormData {
+  date: string;
+  energyLevel: number;
+  moodLevel: number;
+  note?: string;
+}
+
+export interface Insight {
+  type: 'same_day' | 'next_day' | 'weekly_pattern';
+  insight: string;
+  confidence: 'low' | 'medium' | 'high';
+  dataPoints: number;
+  details: {
+    correlation: number;
+    direction: string;
+    activityType?: string;
+  };
+}
+
+export interface WeeklyPatternEntry {
+  dayOfWeek: number;
+  avgEnergy: number;
+  avgMood: number;
+  count: number;
+}
+
+export interface InsightsData {
+  correlations: Insight[];
+  summary: {
+    averageEnergy: number;
+    averageMood: number;
+    bestDayOfWeek: string | null;
+    worstDayOfWeek: string | null;
+  };
+  weeklyPattern: WeeklyPatternEntry[];
+}
