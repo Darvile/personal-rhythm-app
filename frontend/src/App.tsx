@@ -6,7 +6,7 @@ import { ComponentCard } from './components/ComponentCard';
 import { ComponentForm } from './components/ComponentForm';
 import { RecordModal } from './components/RecordModal';
 import { CalendarView } from './components/Dashboard/CalendarView';
-import { TimelineView } from './components/Dashboard/TimelineView';
+import { WeeklyGoalsView } from './components/Dashboard/WeeklyGoalsView';
 import { MetricsPanel } from './components/Dashboard/MetricsPanel';
 import { Button } from './components/ui/Button';
 import type { Component, ComponentFormData, Record, RecordFormData } from './types';
@@ -137,11 +137,9 @@ function Dashboard() {
           </div>
 
           <div>
-            <TimelineView
-              records={records}
+            <WeeklyGoalsView
               components={components}
-              onEditRecord={setEditingRecord}
-              onDeleteRecord={handleDeleteRecord}
+              onLogActivity={setLoggingComponent}
             />
           </div>
         </div>
