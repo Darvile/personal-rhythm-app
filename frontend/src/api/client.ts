@@ -1,12 +1,38 @@
 import axios from 'axios';
-import type { Component, ComponentFormData, Record, RecordFormData, PulseCheck, PulseCheckFormData, InsightsData } from '../types';
+import { fetchAuthSession } from 'aws-amplify/auth';
+import type { Component, ComponentFormData, Record, RecordFormData, PulseCheck, PulseCheckFormData, InsightsData, Stage, StageFormData, StageStatus } from '../types';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
+    : '/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.request.use(async (config) => {
+  try {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.accessToken?.toString();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Not authenticated — let request proceed without token
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      window.location.reload();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const componentApi = {
   getAll: async (): Promise<Component[]> => {
@@ -87,6 +113,32 @@ export const pulseCheckApi = {
 
   getInsights: async (): Promise<InsightsData> => {
     const { data } = await api.get<InsightsData>('/pulse-checks/insights');
+    return data;
+  },
+};
+
+export const stageApi = {
+  getByComponent: async (componentId: string): Promise<Stage[]> => {
+    const { data } = await api.get<Stage[]>('/stages', { params: { componentId } });
+    return data;
+  },
+
+  create: async (stage: StageFormData): Promise<Stage> => {
+    const { data } = await api.post<Stage>('/stages', stage);
+    return data;
+  },
+
+  update: async (id: string, stage: Partial<Omit<StageFormData, 'componentId'> & { status?: StageStatus }>): Promise<Stage> => {
+    const { data } = await api.patch<Stage>(`/stages/${id}`, stage);
+    return data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/stages/${id}`);
+  },
+
+  reorder: async (componentId: string, stageIds: string[]): Promise<Stage[]> => {
+    const { data } = await api.put<Stage[]>(`/stages/reorder/${componentId}`, { stageIds });
     return data;
   },
 };

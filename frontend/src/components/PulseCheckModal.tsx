@@ -19,7 +19,6 @@ export function PulseCheckModal({ isOpen, onClose, onSubmit, existingCheck, isLo
     date: new Date().toISOString().split('T')[0],
     energyLevel: 3,
     moodLevel: 3,
-    note: '',
   });
 
   useEffect(() => {
@@ -28,14 +27,12 @@ export function PulseCheckModal({ isOpen, onClose, onSubmit, existingCheck, isLo
         date: existingCheck.date.split('T')[0],
         energyLevel: existingCheck.energyLevel,
         moodLevel: existingCheck.moodLevel,
-        note: existingCheck.note || '',
       });
     } else {
       setFormData({
         date: new Date().toISOString().split('T')[0],
         energyLevel: 3,
         moodLevel: 3,
-        note: '',
       });
     }
   }, [existingCheck, isOpen]);
@@ -122,21 +119,6 @@ export function PulseCheckModal({ isOpen, onClose, onSubmit, existingCheck, isLo
             <span className="text-xs text-gray-400">Low</span>
             <span className="text-xs text-gray-400">High</span>
           </div>
-        </div>
-
-        {/* Optional Note */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Note (optional)
-          </label>
-          <textarea
-            value={formData.note}
-            onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            rows={2}
-            maxLength={500}
-            placeholder="How are you feeling today?"
-          />
         </div>
 
         {/* Buttons */}

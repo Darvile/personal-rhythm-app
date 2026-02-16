@@ -1,23 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
 import { Component } from '../models/Component';
 import { Record } from '../models/Record';
+import { Stage } from '../models/Stage';
 import { createError } from '../middleware/errorHandler';
 import { getWeekBounds, calculateSuccessRate } from '../utils/statsCalculator';
 import { CreateComponentInput, UpdateComponentInput } from '../schemas/component.schema';
 import { IComponentWithStats } from '../interfaces/component.interface';
 
 export async function getAllComponents(
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const components = await Component.find().sort({ createdAt: -1 });
+    const userId = req.userId!;
+    const components = await Component.find({ userId }).sort({ createdAt: -1 });
     const { start, end } = getWeekBounds();
 
     const recordCounts = await Record.aggregate([
       {
         $match: {
+          userId,
           date: { $gte: start, $lte: end },
         },
       },
@@ -60,7 +63,8 @@ export async function getComponentById(
   next: NextFunction
 ): Promise<void> {
   try {
-    const component = await Component.findById(req.params.id);
+    const userId = req.userId!;
+    const component = await Component.findOne({ _id: req.params.id, userId });
     if (!component) {
       throw createError('Component not found', 404);
     }
@@ -68,6 +72,7 @@ export async function getComponentById(
     const { start, end } = getWeekBounds();
     const currentWeekLogs = await Record.countDocuments({
       componentId: component._id,
+      userId,
       date: { $gte: start, $lte: end },
     });
 
@@ -95,7 +100,8 @@ export async function createComponent(
   next: NextFunction
 ): Promise<void> {
   try {
-    const component = new Component(req.body);
+    const userId = req.userId!;
+    const component = new Component({ ...req.body, userId });
     await component.save();
 
     const componentWithStats: IComponentWithStats = {
@@ -122,8 +128,9 @@ export async function updateComponent(
   next: NextFunction
 ): Promise<void> {
   try {
-    const component = await Component.findByIdAndUpdate(
-      req.params.id,
+    const userId = req.userId!;
+    const component = await Component.findOneAndUpdate(
+      { _id: req.params.id, userId },
       { $set: req.body },
       { new: true, runValidators: true }
     );
@@ -135,6 +142,7 @@ export async function updateComponent(
     const { start, end } = getWeekBounds();
     const currentWeekLogs = await Record.countDocuments({
       componentId: component._id,
+      userId,
       date: { $gte: start, $lte: end },
     });
 
@@ -162,12 +170,14 @@ export async function deleteComponent(
   next: NextFunction
 ): Promise<void> {
   try {
-    const component = await Component.findByIdAndDelete(req.params.id);
+    const userId = req.userId!;
+    const component = await Component.findOneAndDelete({ _id: req.params.id, userId });
     if (!component) {
       throw createError('Component not found', 404);
     }
 
-    await Record.deleteMany({ componentId: component._id });
+    await Record.deleteMany({ componentId: component._id, userId });
+    await Stage.deleteMany({ componentId: component._id, userId });
 
     res.status(204).send();
   } catch (error) {

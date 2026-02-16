@@ -1,5 +1,6 @@
 export type Weight = 'low' | 'medium' | 'high';
 export type EffortLevel = 'low' | 'medium' | 'high';
+export type StageStatus = 'active' | 'completed' | 'archived';
 
 export interface Component {
   _id: string;
@@ -42,7 +43,6 @@ export interface PulseCheck {
   date: string;
   energyLevel: number;  // 1-5
   moodLevel: number;    // 1-5
-  note?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,7 +51,6 @@ export interface PulseCheckFormData {
   date: string;
   energyLevel: number;
   moodLevel: number;
-  note?: string;
 }
 
 export interface Insight {
@@ -82,4 +81,26 @@ export interface InsightsData {
     worstDayOfWeek: string | null;
   };
   weeklyPattern: WeeklyPatternEntry[];
+}
+
+export interface Stage {
+  _id: string;
+  componentId: string;
+  name: string;
+  description?: string;
+  effortLevel: EffortLevel;
+  status: StageStatus;
+  order: number;
+  color?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StageFormData {
+  componentId: string;
+  name: string;
+  description?: string;
+  effortLevel: EffortLevel;
+  color?: string;
 }

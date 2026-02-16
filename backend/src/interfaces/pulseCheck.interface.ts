@@ -1,10 +1,10 @@
 import { Document, Types } from 'mongoose';
 
 export interface IPulseCheck {
+  userId: string;
   date: Date;
   energyLevel: number;  // 1-5
   moodLevel: number;    // 1-5
-  note?: string;
   createdAt: Date;
   updatedAt: Date;
 }

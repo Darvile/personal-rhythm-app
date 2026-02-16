@@ -78,20 +78,21 @@ function getDirection(correlation: number): string {
 }
 
 export async function getInsights(
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
+    const userId = req.userId!;
     // Get last 30 days of pulse checks and records
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     thirtyDaysAgo.setUTCHours(0, 0, 0, 0);
 
     const [pulseChecks, records, components] = await Promise.all([
-      PulseCheck.find({ date: { $gte: thirtyDaysAgo } }).sort({ date: 1 }),
-      Record.find({ date: { $gte: thirtyDaysAgo } }),
-      Component.find(),
+      PulseCheck.find({ userId, date: { $gte: thirtyDaysAgo } }).sort({ date: 1 }),
+      Record.find({ userId, date: { $gte: thirtyDaysAgo } }),
+      Component.find({ userId }),
     ]);
 
     // Build component name map

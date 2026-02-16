@@ -1,5 +1,8 @@
+import './auth/config';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import { LoginPage } from './components/LoginPage';
 import { useComponents, useCreateComponent, useUpdateComponent, useDeleteComponent } from './hooks/useComponents';
 import { useRecords, useCreateRecord, useUpdateRecord, useDeleteRecord } from './hooks/useRecords';
 import { useTodayPulseCheck, useCreatePulseCheck, useInsights } from './hooks/usePulseChecks';
@@ -7,6 +10,7 @@ import { ComponentCard } from './components/ComponentCard';
 import { ComponentForm } from './components/ComponentForm';
 import { RecordModal } from './components/RecordModal';
 import { PulseCheckModal } from './components/PulseCheckModal';
+import { StagesPanel } from './components/StagesPanel';
 import { CalendarView } from './components/Dashboard/CalendarView';
 import { WeeklyGoalsView } from './components/Dashboard/WeeklyGoalsView';
 import { MetricsPanel } from './components/Dashboard/MetricsPanel';
@@ -21,6 +25,7 @@ type ViewMode = 'focus' | 'full';
 const queryClient = new QueryClient();
 
 function Dashboard() {
+  const { logout } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('focus');
   const [isComponentFormOpen, setIsComponentFormOpen] = useState(false);
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
@@ -28,6 +33,7 @@ function Dashboard() {
   const [editingRecord, setEditingRecord] = useState<Record | null>(null);
   const [addingRecordDate, setAddingRecordDate] = useState<string | null>(null);
   const [isPulseCheckOpen, setIsPulseCheckOpen] = useState(false);
+  const [stagesPanelComponent, setStagesPanelComponent] = useState<Component | null>(null);
 
   const { data: components = [], isLoading: componentsLoading } = useComponents();
   const { data: records = [], isLoading: recordsLoading } = useRecords();
@@ -113,9 +119,27 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Pulse</h1>
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Pulse</h1>
+              <div className="flex items-center gap-2 sm:hidden">
+                <PulseCheckPrompt
+                  todayCheck={todayPulseCheck}
+                  onClick={() => setIsPulseCheckOpen(true)}
+                  isLoading={pulseCheckLoading}
+                />
+                <Button size="sm" onClick={() => setIsComponentFormOpen(true)}>
+                  + Add
+                </Button>
+                <button
+                  onClick={() => logout()}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
               <div className="flex rounded-lg border border-gray-200 p-1">
                 <button
                   onClick={() => setViewMode('focus')}
@@ -138,14 +162,22 @@ function Dashboard() {
                   Full
                 </button>
               </div>
-              <PulseCheckPrompt
-                todayCheck={todayPulseCheck}
-                onClick={() => setIsPulseCheckOpen(true)}
-                isLoading={pulseCheckLoading}
-              />
-              <Button onClick={() => setIsComponentFormOpen(true)}>
-                Add Component
-              </Button>
+              <div className="hidden sm:flex items-center gap-4">
+                <PulseCheckPrompt
+                  todayCheck={todayPulseCheck}
+                  onClick={() => setIsPulseCheckOpen(true)}
+                  isLoading={pulseCheckLoading}
+                />
+                <Button onClick={() => setIsComponentFormOpen(true)}>
+                  Add Component
+                </Button>
+                <button
+                  onClick={() => logout()}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -158,6 +190,7 @@ function Dashboard() {
               <FocusMode
                 components={components}
                 onLogActivity={setLoggingComponent}
+                onManageStages={setStagesPanelComponent}
               />
             </div>
             <div>
@@ -188,6 +221,7 @@ function Dashboard() {
                         onEdit={setEditingComponent}
                         onDelete={handleDeleteComponent}
                         onLogActivity={setLoggingComponent}
+                        onManageStages={setStagesPanelComponent}
                       />
                     ))}
                   </div>
@@ -262,15 +296,43 @@ function Dashboard() {
         existingCheck={todayPulseCheck}
         isLoading={createPulseCheck.isPending}
       />
+
+      {stagesPanelComponent && (
+        <StagesPanel
+          isOpen={!!stagesPanelComponent}
+          onClose={() => setStagesPanelComponent(null)}
+          component={stagesPanelComponent}
+        />
+      )}
     </div>
   );
 }
 
+function AuthGate() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  return <Dashboard />;
+}
+
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Dashboard />
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthGate />
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }
 

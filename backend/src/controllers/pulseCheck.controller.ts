@@ -23,9 +23,10 @@ export async function getAllPulseChecks(
   next: NextFunction
 ): Promise<void> {
   try {
+    const userId = req.userId!;
     const { startDate, endDate } = req.query;
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = { userId };
 
     if (startDate || endDate) {
       filter.date = {};
@@ -45,13 +46,14 @@ export async function getAllPulseChecks(
 }
 
 export async function getTodayPulseCheck(
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
+    const userId = req.userId!;
     const today = getTodayNormalized();
-    const pulseCheck = await PulseCheck.findOne({ date: today });
+    const pulseCheck = await PulseCheck.findOne({ userId, date: today });
     res.json(pulseCheck);
   } catch (error) {
     next(error);
@@ -64,7 +66,8 @@ export async function getPulseCheckById(
   next: NextFunction
 ): Promise<void> {
   try {
-    const pulseCheck = await PulseCheck.findById(req.params.id);
+    const userId = req.userId!;
+    const pulseCheck = await PulseCheck.findOne({ _id: req.params.id, userId });
     if (!pulseCheck) {
       throw createError('Pulse check not found', 404);
     }
@@ -80,13 +83,15 @@ export async function createPulseCheck(
   next: NextFunction
 ): Promise<void> {
   try {
+    const userId = req.userId!;
     const { date, energyLevel, moodLevel, note } = req.body;
     const normalizedDate = normalizeDate(date);
 
-    // Upsert: update if exists for this date, create otherwise
+    // Upsert: update if exists for this user+date, create otherwise
     const pulseCheck = await PulseCheck.findOneAndUpdate(
-      { date: normalizedDate },
+      { userId, date: normalizedDate },
       {
+        userId,
         date: normalizedDate,
         energyLevel,
         moodLevel,
@@ -111,8 +116,9 @@ export async function updatePulseCheck(
   next: NextFunction
 ): Promise<void> {
   try {
-    const pulseCheck = await PulseCheck.findByIdAndUpdate(
-      req.params.id,
+    const userId = req.userId!;
+    const pulseCheck = await PulseCheck.findOneAndUpdate(
+      { _id: req.params.id, userId },
       { $set: req.body },
       { new: true, runValidators: true }
     );
@@ -133,7 +139,8 @@ export async function deletePulseCheck(
   next: NextFunction
 ): Promise<void> {
   try {
-    const pulseCheck = await PulseCheck.findByIdAndDelete(req.params.id);
+    const userId = req.userId!;
+    const pulseCheck = await PulseCheck.findOneAndDelete({ _id: req.params.id, userId });
     if (!pulseCheck) {
       throw createError('Pulse check not found', 404);
     }

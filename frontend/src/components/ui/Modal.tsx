@@ -6,9 +6,15 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  size?: 'small' | 'medium' | 'large';
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'medium' }: ModalProps) {
+  const sizeClasses = {
+    small: 'max-w-sm',
+    medium: 'max-w-md',
+    large: 'max-w-4xl',
+  };
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -31,7 +37,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
-        <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className={`relative bg-white rounded-xl shadow-xl ${sizeClasses[size]} w-full p-6`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
             <button

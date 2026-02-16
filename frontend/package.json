@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.20",
+    "aws-amplify": "^6.16.2",
     "axios": "^1.13.4",
+    "headbreaker": "^3.0.0",
+    "konva": "^10.2.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-konva": "^19.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

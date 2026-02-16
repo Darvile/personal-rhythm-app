@@ -3,16 +3,19 @@ import { IRecordDocument } from '../interfaces/record.interface';
 
 const recordSchema = new Schema<IRecordDocument>(
   {
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     componentId: {
       type: Schema.Types.ObjectId,
       ref: 'Component',
       required: true,
-      index: true,
     },
     date: {
       type: Date,
       required: true,
-      index: true,
     },
     effortLevel: {
       type: String,

@@ -3,6 +3,7 @@ import { Document, Types } from 'mongoose';
 export type EffortLevel = 'low' | 'medium' | 'high';
 
 export interface IRecord {
+  userId: string;
   componentId: Types.ObjectId;
   date: Date;
   effortLevel: EffortLevel;

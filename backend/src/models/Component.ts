@@ -3,6 +3,11 @@ import { IComponentDocument } from '../interfaces/component.interface';
 
 const componentSchema = new Schema<IComponentDocument>(
   {
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     name: {
       type: String,
       required: true,

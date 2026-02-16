@@ -17,9 +17,10 @@ export async function getRecords(
   next: NextFunction
 ): Promise<void> {
   try {
+    const userId = req.userId!;
     const { startDate, endDate, componentId } = req.query;
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = { userId };
 
     if (startDate || endDate) {
       filter.date = {};
@@ -51,14 +52,16 @@ export async function createRecord(
   next: NextFunction
 ): Promise<void> {
   try {
+    const userId = req.userId!;
     const { componentId, date, effortLevel, note } = req.body;
 
-    const componentExists = await Component.exists({ _id: componentId });
+    const componentExists = await Component.exists({ _id: componentId, userId });
     if (!componentExists) {
       throw createError('Component not found', 404);
     }
 
     const record = new Record({
+      userId,
       componentId: new Types.ObjectId(componentId),
       date: new Date(date),
       effortLevel,
@@ -80,6 +83,7 @@ export async function updateRecord(
   next: NextFunction
 ): Promise<void> {
   try {
+    const userId = req.userId!;
     const { date, effortLevel, note } = req.body;
 
     const updateData: Partial<{ date: Date; effortLevel: string; note: string }> = {};
@@ -87,8 +91,8 @@ export async function updateRecord(
     if (effortLevel) updateData.effortLevel = effortLevel;
     if (note !== undefined) updateData.note = note;
 
-    const record = await Record.findByIdAndUpdate(
-      req.params.id,
+    const record = await Record.findOneAndUpdate(
+      { _id: req.params.id, userId },
       { $set: updateData },
       { new: true, runValidators: true }
     ).populate('componentId', 'name color');
@@ -109,7 +113,8 @@ export async function deleteRecord(
   next: NextFunction
 ): Promise<void> {
   try {
-    const record = await Record.findByIdAndDelete(req.params.id);
+    const userId = req.userId!;
+    const record = await Record.findOneAndDelete({ _id: req.params.id, userId });
     if (!record) {
       throw createError('Record not found', 404);
     }

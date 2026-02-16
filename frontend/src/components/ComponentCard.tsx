@@ -1,4 +1,5 @@
 import type { Component } from '../types';
+import { useStages } from '../hooks/useStages';
 import { Button } from './ui/Button';
 
 interface ComponentCardProps {
@@ -6,9 +7,15 @@ interface ComponentCardProps {
   onEdit: (component: Component) => void;
   onDelete: (id: string) => void;
   onLogActivity: (component: Component) => void;
+  onManageStages: (component: Component) => void;
 }
 
-export function ComponentCard({ component, onEdit, onDelete, onLogActivity }: ComponentCardProps) {
+export function ComponentCard({ component, onEdit, onDelete, onLogActivity, onManageStages }: ComponentCardProps) {
+  const { data: stages = [] } = useStages(component._id);
+
+  const completedStages = stages.filter((s) => s.status === 'completed').length;
+  const activeAndCompletedStages = stages.filter((s) => s.status !== 'archived').length;
+
   const progressPercent = Math.min(
     (component.currentWeekLogs / component.minWeeklyFreq) * 100,
     100
@@ -56,6 +63,22 @@ export function ComponentCard({ component, onEdit, onDelete, onLogActivity }: Co
         </div>
       </div>
 
+      {activeAndCompletedStages > 0 && (
+        <div className="mb-4 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">
+              {completedStages}/{activeAndCompletedStages} stages
+            </span>
+            <button
+              onClick={() => onManageStages(component)}
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Manage
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <Button
           size="sm"
@@ -63,6 +86,13 @@ export function ComponentCard({ component, onEdit, onDelete, onLogActivity }: Co
           className="flex-1"
         >
           Log Activity
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => onManageStages(component)}
+        >
+          Stages
         </Button>
         <Button
           size="sm"
